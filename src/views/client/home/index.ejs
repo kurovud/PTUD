@@ -1,61 +1,138 @@
 <%- include('../layout/header.ejs') %>
-<main>
-  <section class="container section">
-    <header class="section-head">
-      <h2>Những Loại Nơi Lưu Trú</h2>
+<main class="page">
+  <% const totalRooms = rooms.length; %>
+  <% const averageRating = totalRooms ? (rooms.reduce((sum, room) => sum + (room.rating ?? 0), 0) / totalRooms).toFixed(1) : null; %>
+
+  <section class="hero">
+    <div class="container hero__inner">
+      <span class="hero__eyebrow">Khám phá TripStay</span>
+      <h1 class="hero__title">Tìm căn phòng lý tưởng cho chuyến đi sắp tới</h1>
+      <p class="hero__subtitle">
+        Chúng tôi đã cập nhật trực tiếp <strong><%= totalRooms %></strong> phòng từ hệ thống để bạn dễ dàng chọn lựa.
+        Tận hưởng dịch vụ chu đáo cùng những không gian nghỉ dưỡng được yêu thích nhất.
+      </p>
+
+      <div class="hero__stats">
+        <div class="stat">
+          <span class="stat__number"><%= totalRooms %></span>
+          <span class="stat__label">Phòng khả dụng</span>
+        </div>
+        <div class="stat">
+          <span class="stat__number"><%= roomTypes.length %></span>
+          <span class="stat__label">Loại phòng</span>
+        </div>
+        <div class="stat">
+          <span class="stat__number"><%= averageRating ? averageRating : '–' %></span>
+          <span class="stat__label">Điểm đánh giá trung bình</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="container section section--rooms">
+    <header class="section-head section-head--enhanced">
+      <div>
+        <h2>Những loại nơi lưu trú</h2>
+        <p>Chọn một bộ lọc để xem ngay các phòng phù hợp từ cơ sở dữ liệu.</p>
+      </div>
       <a class="more" href="#">›</a>
     </header>
-        <div class="controls-center">
-          <div class="controls">
-            <button class="btn filter-btn active" data-filter="Tất cả">Tất cả</button>
-            <% roomTypes.forEach(type => { %>
-              <button class="btn filter-btn" data-filter="<%= type.TenLoaiPhong %>"><%= type.TenLoaiPhong %></button>
-            <% }); %>
+
+    <div class="filters" role="tablist" aria-label="Bộ lọc loại phòng">
+      <div class="filters__scroll">
+        <button class="filter-chip is-active" data-filter="Tất cả" data-filter-btn>🏠 Tất cả</button>
+        <% roomTypes.forEach(type => { %>
+          <button class="filter-chip" data-filter="<%= type.TenLoaiPhong %>" data-filter-btn>
+            <span><%= type.TenLoaiPhong %></span>
+          </button>
+        <% }); %>
+      </div>
+    </div>
+
+    <div class="row room-grid" id="room-list" data-room-grid>
+      <% rooms.forEach(room => { %>
+        <article class="card room-card" data-type="<%= room.type %>" data-room-card>
+          <div class="thumb">
+            <img src="<%= room.image || '/image/room-placeholder.svg' %>" alt="Phòng <%= room.type %>" loading="lazy">
+            <% if (room.view) { %>
+              <span class="badge"><%= room.view %></span>
+            <% } else { %>
+              <span class="badge">Phòng nổi bật</span>
+            <% } %>
+            <% if (room.status) { %>
+              <span class="status-badge <%= room.status === 'Trống' ? 'status-badge--available' : 'status-badge--busy' %>"><%= room.status %></span>
+            <% } %>
+            <span class="wish" aria-hidden="true">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#111827" stroke-width="1.6">
+                <path d="M12 21s-7-4.73-9.33-7.06a5.5 5.5 0 1 1 7.78-7.78L12 5.72l1.55-1.56a5.5 5.5 0 1 1 7.78 7.78C19 16.27 12 21 12 21Z" />
+              </svg>
+            </span>
           </div>
-        </div>
-    
-        <div class="row" id="room-list">
-          <% rooms.forEach(room => { %>
-            <article class="card" data-type="<%= room.TenLoaiPhong %>">
-              <div class="thumb">
-                <img src="<%= room.HinhAnh %>" alt="<%= room.TenLoaiPhong %>">
-                <span class="badge">Được khách yêu thích</span>
-                <span class="wish"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#111827" stroke-width="1.6">
-                    <path d="M12 21s-7-4.73-9.33-7.06a5.5 5.5 0 1 1 7.78-7.78L12 5.72l1.55-1.56a5.5 5.5 0 1 1 7.78 7.78C19 16.27 12 21 12 21Z" />
-                  </svg></span>
-              </div>
-              <div class="card-body">
-                <h3 class="title"><%= room.TenLoaiPhong %> tại <%= room.DiaChi %></h3>
-                <div class="meta">₫<%= room.Gia %> cho 2 đêm · ★ <%= room.Rating %></div>
-              </div>
-            </article>
-          <% }); %>
-        </div>
-    <script>
-      document.addEventListener('DOMContentLoaded', () => {
-        const filterButtons = document.querySelectorAll('.filter-btn');
-        const roomCards = document.querySelectorAll('#room-list .card');
-    
-        filterButtons.forEach(button => {
-          button.addEventListener('click', () => {
-            // Remove active class from all buttons
-            filterButtons.forEach(btn => btn.classList.remove('active'));
-            // Add active class to the clicked button
-            button.classList.add('active');
-    
-            const filter = button.getAttribute('data-filter');
-    
-            roomCards.forEach(card => {
-              if (filter === 'Tất cả' || card.getAttribute('data-type') === filter) {
-                card.style.display = 'flex'; // Use flex to maintain card layout
-              } else {
-                card.style.display = 'none';
-              }
-            });
+          <div class="card-body">
+            <div class="card-body__header">
+              <h3 class="title">Phòng <%= room.type %></h3>
+              <% if (room.number) { %>
+                <span class="room-chip">Số phòng <%= room.number %></span>
+              <% } %>
+            </div>
+            <% if (room.address) { %>
+              <p class="address">📍 <%= room.address %></p>
+            <% } %>
+            <div class="meta">
+              <span class="price">₫<%= helpers.formatMoney(room.price) %> / đêm</span>
+              <% if (room.rating !== null) { %>
+                <span class="rating">★ <%= room.rating.toFixed(1) %></span>
+              <% } else { %>
+                <span class="rating rating--pending">Chưa có đánh giá</span>
+              <% } %>
+            </div>
+            <% if (room.description) { %>
+              <p class="description"><%= room.description %></p>
+            <% } else { %>
+              <p class="description description--muted">Không gian được thiết kế ấm cúng, phù hợp cho kỳ nghỉ thoải mái.</p>
+            <% } %>
+          </div>
+        </article>
+      <% }); %>
+    </div>
+
+    <div class="empty-state" data-empty <%= rooms.length ? 'hidden' : '' %>>
+      <img src="/image/room-placeholder.svg" alt="Không có phòng" width="120" height="120">
+      <h3>Chưa có phòng phù hợp</h3>
+      <p>Hãy thử chọn bộ lọc khác hoặc quay lại sau khi hệ thống được cập nhật.</p>
+    </div>
+  </section>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const filterButtons = document.querySelectorAll('[data-filter-btn]');
+      const roomCards = document.querySelectorAll('[data-room-card]');
+      const emptyState = document.querySelector('[data-empty]');
+
+      const updateEmptyState = () => {
+        if (!emptyState) return;
+        const hasVisibleCard = Array.from(roomCards).some(card => !card.classList.contains('is-hidden'));
+        emptyState.hidden = hasVisibleCard;
+      };
+
+      filterButtons.forEach(button => {
+        button.addEventListener('click', () => {
+          filterButtons.forEach(btn => btn.classList.remove('is-active'));
+          button.classList.add('is-active');
+
+          const filter = button.getAttribute('data-filter');
+
+          roomCards.forEach(card => {
+            const match = filter === 'Tất cả' || card.getAttribute('data-type') === filter;
+            card.classList.toggle('is-hidden', !match);
           });
+
+          updateEmptyState();
         });
       });
-    </script>
-      </section>
+
+      updateEmptyState();
+    });
+  </script>
 </main>
 <%- include('../layout/footer.ejs') %>

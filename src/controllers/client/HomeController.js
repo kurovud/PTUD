@@ -17,9 +17,43 @@ class HomeController {
 
             // Lấy toàn bộ phòng
             const rooms = await roomService.getAll();
-            console.log(rooms);
 
-            res.render('client/home/index', { message: message, roomTypes: roomTypes, rooms: rooms });
+            const normalizedRooms = rooms
+                .map((room) => {
+                    const rating = room.Rating !== null && room.Rating !== undefined
+                        ? Number(room.Rating)
+                        : null;
+                    const price = room.Gia !== null && room.Gia !== undefined
+                        ? Number(room.Gia)
+                        : 0;
+
+                    return {
+                        id: room.MaPhong,
+                        number: room.SoPhong,
+                        floor: room.ViTriTang,
+                        status: room.TrangThaiPhong,
+                        typeId: room.MaLoaiPhong,
+                        type: room.TenLoaiPhong,
+                        view: room.View,
+                        address: room.DiaChi,
+                        rating: Number.isNaN(rating) ? null : rating,
+                        description: room.MoTa,
+                        image: room.HinhAnh && room.HinhAnh.trim() !== '' ? room.HinhAnh : null,
+                        equipmentId: room.MaThietBi,
+                        price: Number.isNaN(price) ? 0 : price
+                    };
+                })
+                .sort((a, b) => {
+                    const ratingA = a.rating ?? 0;
+                    const ratingB = b.rating ?? 0;
+                    return ratingB - ratingA;
+                });
+
+            res.render('client/home/index', {
+                message: message,
+                roomTypes: roomTypes,
+                rooms: normalizedRooms
+            });
         } catch (error) {
             console.error('Error fetching data:', error);
             res.status(500).send('Internal Server Error');
@@ -40,4 +74,4 @@ class HomeController {
 }
 
 
-module.exports = HomeController
+module.exports = HomeController;
